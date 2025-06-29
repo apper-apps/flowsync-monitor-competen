@@ -1,45 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import ApperIcon from '@/components/ApperIcon';
-import KPICard from '@/components/molecules/KPICard';
-import TaskSummaryCard from '@/components/molecules/TaskSummaryCard';
-import RecentActivities from '@/components/molecules/RecentActivities';
-import PerformanceChart from '@/components/molecules/PerformanceChart';
-import QuickActions from '@/components/molecules/QuickActions';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import { dashboardService } from '@/services/api/dashboardService';
-import { useAuth } from '@/hooks/useAuth';
-
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import ApperIcon from "@/components/ApperIcon";
+import PerformanceChart from "@/components/molecules/PerformanceChart";
+import KPICard from "@/components/molecules/KPICard";
+import QuickActions from "@/components/molecules/QuickActions";
+import RecentActivities from "@/components/molecules/RecentActivities";
+import TaskSummaryCard from "@/components/molecules/TaskSummaryCard";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import { dashboardService } from "@/services/api/dashboardService";
 const Dashboard = () => {
-  const { user, isAdmin } = useAuth();
-  const [dashboardData, setDashboardData] = useState({});
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const { user } = useAuth();
+
+  const loadDashboardData = async (attempt = 1) => {
+    try {
+      setLoading(true);
+      if (attempt === 1) {
+        setError(null);
+      }
+      
+      const data = await dashboardService.getDashboardData(user?.role || 'staff');
+      
+      // Validate received data
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid dashboard data received');
+      }
+      
+      setData(data);
+      setRetryCount(0); // Reset retry count on success
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to load dashboard data';
+      console.error(`Dashboard error (attempt ${attempt}):`, err);
+      
+      // Auto-retry up to 3 times with exponential backoff
+      if (attempt < 3) {
+        console.log(`Retrying dashboard load in ${attempt * 1000}ms...`);
+        setTimeout(() => {
+          loadDashboardData(attempt + 1);
+        }, attempt * 1000);
+        setRetryCount(attempt);
+      } else {
+        setError(errorMessage);
+        setRetryCount(0);
+      }
+    } finally {
+      if (attempt >= 3 || error) {
+        setLoading(false);
+      }
+    }
+};
+
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(0);
+    loadDashboardData();
+  };
 
   useEffect(() => {
     loadDashboardData();
   }, [user?.role]);
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await dashboardService.getDashboardData(user?.role);
-      setDashboardData(data);
-    } catch (err) {
-      setError('Failed to load dashboard data. Please try again.');
-      console.error('Dashboard error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
 
-  if (loading) return <Loading />;
-  if (error) return <Error message={error} onRetry={loadDashboardData} />;
+if (loading) {
+    return (
+      <Loading 
+        message={retryCount > 0 ? `Retrying... (${retryCount}/3)` : 'Loading dashboard...'}
+      />
+    );
+  }
+  
+  if (error) {
+    return (
+      <Error 
+        message={error} 
+        onRetry={handleRetry}
+        showRetry={true}
+      />
+    );
+  }
+  
+  if (!data) {
+    return (
+      <Error 
+        message="No dashboard data available" 
+        onRetry={handleRetry}
+        showRetry={true}
+      />
+    );
+}
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 p-6 space-y-8">
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -70,31 +127,31 @@ const Dashboard = () => {
       </motion.div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
           title="Active Customers"
-          value={dashboardData.activeCustomers || 0}
+          value={data.activeCustomers || 0}
           change={+12}
           icon="Users"
           color="primary"
         />
-        <KPICard
+<KPICard
           title="Pending Tasks"
-          value={dashboardData.pendingTasks || 0}
+          value={data.pendingTasks || 0}
           change={-8}
           icon="CheckSquare"
           color="warning"
         />
-        <KPICard
+<KPICard
           title="Completion Rate"
-          value={`${dashboardData.completionRate || 0}%`}
+          value={`${data.completionRate || 0}%`}
           change={+5}
           icon="TrendingUp"
           color="success"
         />
-        <KPICard
+<KPICard
           title="Active Workflows"
-          value={dashboardData.activeWorkflows || 0}
+          value={data.activeWorkflows || 0}
           change={+2}
           icon="GitBranch"
           color="secondary"
@@ -103,16 +160,16 @@ const Dashboard = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
+{/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
-          <TaskSummaryCard tasks={dashboardData.taskSummary || []} />
-          {isAdmin && <PerformanceChart data={dashboardData.performanceData || []} />}
+          <TaskSummaryCard tasks={data.taskSummary || []} />
+          {isAdmin && <PerformanceChart data={data.performanceData || []} />}
         </div>
 
-        {/* Right Column */}
+{/* Right Column */}
         <div className="space-y-6">
           <QuickActions />
-          <RecentActivities activities={dashboardData.recentActivities || []} />
+          <RecentActivities activities={data.recentActivities || []} />
         </div>
       </div>
     </div>

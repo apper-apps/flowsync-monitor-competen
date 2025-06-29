@@ -72,16 +72,37 @@ const mockData = {
 };
 
 export const dashboardService = {
-  async getDashboardData(role = 'staff') {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Simulate occasional errors
-    if (Math.random() < 0.1) {
-      throw new Error('Failed to fetch dashboard data');
+async getDashboardData(role) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Validate role parameter
+      if (!role || typeof role !== 'string') {
+        console.warn('Invalid role provided to getDashboardData:', role);
+        return mockData.staff;
+      }
+      
+      const data = mockData[role] || mockData.staff;
+      
+      // Validate data integrity
+      if (!data || typeof data !== 'object') {
+        throw new Error('Dashboard data is corrupted or unavailable');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Dashboard service error:', error);
+      // Return fallback data instead of throwing
+      return {
+        activeCustomers: 0,
+        pendingTasks: 0,
+        completionRate: 0,
+        activeWorkflows: 0,
+        taskSummary: [],
+        performanceData: [],
+        recentActivities: []
+      };
     }
-    
-    return mockData[role] || mockData.staff;
   },
 
   async getKPIData() {
