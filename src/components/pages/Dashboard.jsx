@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
 import ApperIcon from "@/components/ApperIcon";
 import PerformanceChart from "@/components/molecules/PerformanceChart";
 import KPICard from "@/components/molecules/KPICard";
@@ -9,6 +8,7 @@ import RecentActivities from "@/components/molecules/RecentActivities";
 import TaskSummaryCard from "@/components/molecules/TaskSummaryCard";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
+import { useAuth } from "@/hooks/useAuth";
 import { dashboardService } from "@/services/api/dashboardService";
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -43,17 +43,20 @@ const Dashboard = () => {
         setTimeout(() => {
           loadDashboardData(attempt + 1);
         }, attempt * 1000);
-        setRetryCount(attempt);
+setRetryCount(attempt);
       } else {
         setError(errorMessage);
         setRetryCount(0);
       }
+    } catch (err) {
+      console.error('Catch block error:', err);
+      setError(err.message || 'Failed to load dashboard data');
     } finally {
-      if (attempt >= 3 || error) {
+      // Always clear loading state after final attempt or on success
+      if (attempt >= 3 || data !== null) {
         setLoading(false);
       }
     }
-};
 
   const handleRetry = () => {
     setError(null);
