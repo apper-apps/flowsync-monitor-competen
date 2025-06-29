@@ -37,27 +37,24 @@ const Dashboard = () => {
       const errorMessage = err.message || 'Failed to load dashboard data';
       console.error(`Dashboard error (attempt ${attempt}):`, err);
       
-      // Auto-retry up to 3 times with exponential backoff
+// Auto-retry up to 3 times with exponential backoff
       if (attempt < 3) {
         console.log(`Retrying dashboard load in ${attempt * 1000}ms...`);
         setTimeout(() => {
           loadDashboardData(attempt + 1);
         }, attempt * 1000);
-setRetryCount(attempt);
+        setRetryCount(attempt);
       } else {
         setError(errorMessage);
         setRetryCount(0);
       }
-    } catch (err) {
-      console.error('Catch block error:', err);
-      setError(err.message || 'Failed to load dashboard data');
     } finally {
       // Always clear loading state after final attempt or on success
-      if (attempt >= 3 || data !== null) {
+      if (attempt >= 3) {
         setLoading(false);
       }
     }
-
+  };
   const handleRetry = () => {
     setError(null);
     setRetryCount(0);
