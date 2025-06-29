@@ -1,0 +1,89 @@
+@import 'react-toastify/dist/ReactToastify.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-white text-slate-900 font-body;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-md font-medium transition-colors duration-150;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-500 hover:bg-secondary-600 text-white px-4 py-2 rounded-md font-medium transition-colors duration-150;
+  }
+  
+  .btn-outline {
+    @apply border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-md font-medium transition-colors duration-150;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-slate-200 p-6;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-pending {
+    @apply bg-warning-100 text-warning-700;
+  }
+  
+  .status-completed {
+    @apply bg-success-100 text-success-700;
+  }
+  
+  .status-overdue {
+    @apply bg-error-100 text-error-700;
+  }
+  
+  .status-active {
+    @apply bg-info-100 text-info-700;
+  }
+  
+  .status-paused {
+    @apply bg-slate-100 text-slate-700;
+  }
+}
+
+/* Toast Customization */
+.Toastify__toast-container {
+  width: auto;
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.Toastify__toast {
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
